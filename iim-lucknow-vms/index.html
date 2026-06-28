@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IIM Lucknow — Visitor Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="logo-mark">IIM</div>
+        <div>
+          <h1>Visitor Management System</h1>
+          <p class="subtitle">IIM Lucknow · Campus Gate Operations</p>
+        </div>
+      </div>
+      <div class="role-switcher">
+        <label for="role-select">Viewing as</label>
+        <select id="role-select">
+          <option value="coordinator">Coordinator</option>
+          <option value="security">Security</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </header>
+
+    <main id="main-content"></main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
