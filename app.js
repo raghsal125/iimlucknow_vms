@@ -155,7 +155,7 @@ function seedVisitors() {
 
 // --- State ---
 let visitors = seedVisitors();
-let currentRole = 'coordinator';
+let currentRole = 'security';
 let securitySearch = '';
 let adminFilters = { search: '', date: '', visitorType: '', status: '' };
 let batchRows = [emptyBatchRow(), emptyBatchRow(), emptyBatchRow()];
@@ -380,47 +380,61 @@ function renderCoordinator() {
     </div>`;
 }
 
+function renderVisitorCard(v, q) {
+  const canCheckIn = v.status === 'expected';
+  const canCheckOut = v.status === 'checked-in';
+  return `
+    <div class="visitor-card${q && v.name.toLowerCase().includes(q) ? ' highlight' : ''}">
+      <div class="visitor-info">
+        <h4>${esc(v.name)}${v.company ? ` · ${esc(v.company)}` : ''}</h4>
+        <p>${esc(v.visitorType)} · ${esc(v.purpose)}</p>
+        <p style="margin-top:0.1rem">Host: ${esc(v.hostName)} · ${v.gate} · ${v.expectedTime}</p>
+        <div class="visitor-meta">
+          ${originBadge(v.origin)}
+          ${statusBadge(v.status)}
+        </div>
+      </div>
+      <div class="visitor-actions">
+        ${canCheckIn ? `<button class="btn btn-success btn-sm" data-checkin="${v.id}">Check In</button>` : ''}
+        ${canCheckOut ? `<button class="btn btn-outline btn-sm" data-checkout="${v.id}">Check Out</button>` : ''}
+      </div>
+    </div>`;
+}
+
 function renderSecurity() {
   const today = todayISO();
   const todayVisitors = visitors.filter((v) => v.expectedDate === today);
-  const expectedToday = todayVisitors.filter((v) => v.origin === 'pre-registered' && v.status === 'expected');
+  const expectedToday = todayVisitors.filter((v) => v.origin === 'pre-registered');
+  const walkinToday = todayVisitors.filter((v) => v.origin === 'walk-in');
+  const awaitingArrival = expectedToday.filter((v) => v.status === 'expected');
   const activeToday = todayVisitors.filter((v) => v.status === 'checked-in');
 
   const q = securitySearch.toLowerCase().trim();
-  const filtered = q
-    ? todayVisitors.filter(
-        (v) =>
-          v.name.toLowerCase().includes(q) ||
-          (v.company && v.company.toLowerCase().includes(q)) ||
-          v.hostName.toLowerCase().includes(q)
-      )
-    : todayVisitors;
+  const matchesSearch = (v) =>
+    !q ||
+    v.name.toLowerCase().includes(q) ||
+    (v.company && v.company.toLowerCase().includes(q)) ||
+    v.hostName.toLowerCase().includes(q);
 
-  const listHtml =
-    filtered.length === 0
-      ? `<div class="empty-state"><strong>No visitors found</strong>${q ? 'Try a different search term.' : 'No entries for today yet.'}</div>`
-      : filtered
-          .map((v) => {
-            const canCheckIn = v.status === 'expected';
-            const canCheckOut = v.status === 'checked-in';
-            return `
-        <div class="visitor-card${q && v.name.toLowerCase().includes(q) ? ' highlight' : ''}">
-          <div class="visitor-info">
-            <h4>${esc(v.name)}${v.company ? ` · ${esc(v.company)}` : ''}</h4>
-            <p>${esc(v.visitorType)} · ${esc(v.purpose)}</p>
-            <p style="margin-top:0.1rem">Host: ${esc(v.hostName)} · ${v.gate} · ${v.expectedTime}</p>
-            <div class="visitor-meta">
-              ${originBadge(v.origin)}
-              ${statusBadge(v.status)}
-            </div>
-          </div>
-          <div class="visitor-actions">
-            ${canCheckIn ? `<button class="btn btn-success btn-sm" data-checkin="${v.id}">Check In</button>` : ''}
-            ${canCheckOut ? `<button class="btn btn-outline btn-sm" data-checkout="${v.id}">Check Out</button>` : ''}
-          </div>
-        </div>`;
-          })
-          .join('');
+  const filteredExpected = expectedToday.filter(matchesSearch);
+  const filteredWalkin = walkinToday.filter(matchesSearch);
+  const hasResults = filteredExpected.length > 0 || filteredWalkin.length > 0;
+
+  const listHtml = !hasResults
+    ? `<div class="empty-state"><strong>No visitors found</strong>${q ? ' Try a different search term.' : ' No entries for today yet.'}</div>`
+    : `
+      <div class="visitor-section">
+        <div class="section-label">Expected arrivals — pre-registered (${filteredExpected.length})</div>
+        ${filteredExpected.length
+          ? filteredExpected.map((v) => renderVisitorCard(v, q)).join('')
+          : '<div class="section-empty">No expected visitors match this search.</div>'}
+      </div>
+      <div class="visitor-section walkin-section">
+        <div class="section-label">Walk-ins logged today (${filteredWalkin.length})</div>
+        ${filteredWalkin.length
+          ? filteredWalkin.map((v) => renderVisitorCard(v, q)).join('')
+          : '<div class="section-empty">No walk-ins logged yet today.</div>'}
+      </div>`;
 
   return `
     <div class="page-header">
@@ -436,7 +450,7 @@ function renderSecurity() {
     <div class="security-layout">
       <div>
         <div class="card">
-          <div class="card-title">Today's visitors (${expectedToday.length} expected · ${activeToday.length} on campus)</div>
+          <div class="card-title">Today's gate log (${awaitingArrival.length} awaiting · ${activeToday.length} on campus)</div>
           <div class="search-bar">
             <input type="search" id="security-search" placeholder="Search by name, company, or host…" value="${esc(securitySearch)}" />
           </div>

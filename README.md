@@ -12,6 +12,8 @@ python3 -m http.server 8080
 
 Then open [http://localhost:8080](http://localhost:8080) in your browser.
 
+The app opens on the **Security** view by default so reviewers immediately see the Expected vs. Walk-in distinction with seeded sample data.
+
 > **Note:** ES modules require a local server — opening `index.html` directly from the filesystem may not work in all browsers.
 
 ## Demo flow
